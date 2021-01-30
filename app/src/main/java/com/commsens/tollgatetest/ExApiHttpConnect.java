@@ -35,8 +35,6 @@ public class ExApiHttpConnect {
     private final String EX_API_NUM_OF_ROWS = "100";
     private final String EX_API_PAGE_NO = "1";
 
-
-    StringBuilder postData = new StringBuilder();
     VolleyManager volleyManager;
 
 
@@ -47,15 +45,14 @@ public class ExApiHttpConnect {
 
     public String getLocationInfoUnitHttp(String routeNo){
         try {
-            postData.append("key").append("=").append(EX_API_KEY).append("&");
-            postData.append("type").append("=").append("json").append("&");
-            postData.append("routeNo").append("=").append(routeNo).append("&");
-//            postData.append("unitCode").append("=").append(EX_API_KEY).append("&");
-            postData.append("numOfRows").append("=").append("100").append("&");
-            postData.append("pageNo").append("=").append("1");
+            String urlString = EX_API_URL +
+                    "key=" + EX_API_KEY + "&" +
+                    "type=" + EX_API_TYPE + "&" +
+                    "routeNo=" + routeNo + "&" +
+                    "numOfRows=" + EX_API_NUM_OF_ROWS + "&" +
+                    "pageNo=" + EX_API_PAGE_NO;
 
-
-            URL url = new URL(EX_API_URL);
+            URL url = new URL(urlString);
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setDefaultUseCaches(false);
             httpURLConnection.setDoInput(true);
@@ -72,10 +69,10 @@ public class ExApiHttpConnect {
                     new OutputStreamWriter(httpURLConnection.getOutputStream(),
                             StandardCharsets.UTF_8);
 
-            PrintWriter printWriter = new PrintWriter(outputStreamWriter);
-            printWriter.write(postData.toString());
-            printWriter.flush();
-            Log.i("Http Write", postData.toString());
+//            PrintWriter printWriter = new PrintWriter(outputStreamWriter);
+//            printWriter.write(postData.toString());
+//            printWriter.flush();
+//            Log.i("Http Write", postData.toString());
 
             InputStreamReader inputStreamReader =
                     new InputStreamReader(httpURLConnection.getInputStream(),
