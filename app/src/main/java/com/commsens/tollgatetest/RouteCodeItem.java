@@ -3,8 +3,8 @@ package com.commsens.tollgatetest;
 import androidx.annotation.NonNull;
 
 public class RouteCodeItem {
-    private String routeCode;
-    private String routeName;
+    private final String routeCode;
+    private final String routeName;
 
     public RouteCodeItem(@NonNull String routeCode, @NonNull String routeName) {
         this.routeCode = routeCode;
@@ -15,7 +15,7 @@ public class RouteCodeItem {
         return routeCode;
     }
 
-   public String getRouteName() {
+    public String getRouteName() {
         return routeName;
     }
 

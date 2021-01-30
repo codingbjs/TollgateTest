@@ -1,16 +1,22 @@
 package com.commsens.tollgatetest;
 
+import android.content.Context;
 import android.util.Log;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ExApiHttpConnect {
 
@@ -21,17 +27,25 @@ public class ExApiHttpConnect {
 //    numOfRows	string	선택	한 페이지당 출력건수
 //    pageNo	string	선택	출력 페이지번호
 
+    private final String TAG = "ExApiHttpConnect";
 
-    private final String EX_API_KEY = "test";
-    private final String EX_API_URL = "http://data.ex.co.kr/openapi/locationinfo/locationinfoUnit";
-    private final String EX_API_URL_GET = "http://data.ex.co.kr/openapi/locationinfo/locationinfoUnit?key=9207755269&type=json&routeNo=100&numOfRows=10&pageNo=1";
-
+    private final String EX_API_URL = "http://data.ex.co.kr/openapi/locationinfo/locationinfoUnit?";
+    private final String EX_API_KEY = "9207755269";
+    private final String EX_API_TYPE = "json";
+    private final String EX_API_NUM_OF_ROWS = "100";
+    private final String EX_API_PAGE_NO = "1";
 
 
     StringBuilder postData = new StringBuilder();
+    VolleyManager volleyManager;
 
 
-    public String getLocationInfoUnit(String routeNo){
+    public ExApiHttpConnect(Context context) {
+        volleyManager = new VolleyManager(context);
+    }
+
+
+    public String getLocationInfoUnitHttp(String routeNo){
         try {
             postData.append("key").append("=").append(EX_API_KEY).append("&");
             postData.append("type").append("=").append("json").append("&");
@@ -41,7 +55,7 @@ public class ExApiHttpConnect {
             postData.append("pageNo").append("=").append("1");
 
 
-            URL url = new URL(EX_API_URL_GET);
+            URL url = new URL(EX_API_URL);
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setDefaultUseCaches(false);
             httpURLConnection.setDoInput(true);
@@ -85,6 +99,35 @@ public class ExApiHttpConnect {
             return null;
         }
 
+    }
+
+    public void getUnitLocationInfoVolley(String routeNo){
+        StringBuilder url = new StringBuilder();
+        url.append(EX_API_URL);
+        url.append("key=").append(EX_API_KEY).append("&");
+        url.append("type=").append(EX_API_TYPE).append("&");
+        url.append("routeNo=").append(routeNo).append("&");
+        url.append("numOfRows=").append(EX_API_NUM_OF_ROWS).append("&");
+        url.append("pageNo=").append(EX_API_PAGE_NO);
+
+        StringBuilder getUnitLocation = new StringBuilder();
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url.toString(),
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e(TAG, response.toString());
+                        getUnitLocation.append(response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e(TAG, error.toString());
+                    }
+                }){
+        };
+        volleyManager.addToRequestQueue(stringRequest);
     }
 
 }
