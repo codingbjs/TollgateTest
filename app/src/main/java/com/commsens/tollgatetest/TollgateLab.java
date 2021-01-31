@@ -31,9 +31,8 @@ public class TollgateLab {
     public ArrayList<Tollgate> getTollgates() {
         ArrayList<Tollgate> tollgates = new ArrayList<>();
         TollgateCursorWrapper cursorWrapper = queryTollgates(null, null);
-        cursorWrapper.moveToFirst();
-
         try {
+            cursorWrapper.moveToFirst();
             while (!cursorWrapper.isAfterLast()){
                 tollgates.add(cursorWrapper.getTollgate());
                 cursorWrapper.moveToNext();
@@ -41,7 +40,6 @@ public class TollgateLab {
         } finally {
             cursorWrapper.close();
         }
-
         return tollgates;
     }
 
@@ -73,12 +71,12 @@ public class TollgateLab {
         return contentValues;
     }
 
-    public void addTollgate(Tollgate tollgate) {
+    public synchronized void addTollgate(Tollgate tollgate) {
         ContentValues values = getContentValues(tollgate);
         sqLiteDatabase.insert(TollgateTable.NAME, null, values);
     }
 
-    public void updateTollgate(Tollgate tollgate) {
+    public synchronized void updateTollgate(Tollgate tollgate) {
         String unitCode = tollgate.getUnitCode();
         ContentValues values = getContentValues(tollgate);
         sqLiteDatabase.update(TollgateTable.NAME, values,
@@ -86,7 +84,7 @@ public class TollgateLab {
                             new String[]{unitCode});
     }
 
-    public void deleteTollgate(Tollgate tollgate){
+    public synchronized void deleteTollgate(Tollgate tollgate){
         String unitCode = tollgate.getUnitCode();
         sqLiteDatabase.delete(TollgateTable.NAME,
                 TollgateTable.Cols.UNIT_CODE + " = ?",
@@ -106,5 +104,15 @@ public class TollgateLab {
 
         return new TollgateCursorWrapper(cursor);
     }
+
+
+    public synchronized void jsonTollgateInsert(Tollgate tollgate){
+        if(getTollgate(tollgate.getUnitCode()) == null){
+            addTollgate(tollgate);
+        }else {
+            updateTollgate(tollgate);
+        }
+    }
+
 
 }

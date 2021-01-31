@@ -1,12 +1,15 @@
 package com.commsens.tollgatetest;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
@@ -15,6 +18,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
+import com.commsens.tollgatetest.databinding.ActivityMainBinding;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -34,24 +38,42 @@ public class MainActivity extends AppCompatActivity {
     private final String EX_API_NUM_OF_ROWS = "100";
     private final String EX_API_PAGE_NO = "1";
 
+    ActivityMainBinding activityMainBinding;
+
     TollgateLab tollgateLab;
     ArrayList<Tollgate> tollgates;
     VolleyManager volleyManager;
+    int routeCount = 0;
+    RouteCodeList routeCodeList;
+    ArrayList<RouteCodeItem> routeCodeItems;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
+        activityMainBinding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(activityMainBinding.getRoot());
+
+        activityMainBinding.tollgateRecyclerView.setHasFixedSize(true);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
+        activityMainBinding.tollgateRecyclerView.setLayoutManager(layoutManager);
 
         tollgateLab = TollgateLab.getInstance(getApplicationContext());
         tollgates = tollgateLab.getTollgates();
-        volleyManager = new VolleyManager(getApplicationContext());
-        connectEXApi("001");
-//        getUnitLocationInfo("001");  <uses-library android:name="org.apache.http.legacy" android:required="false"/>
-//        getJsonUnitLocation("100"); android:usesCleartextTraffic="true"
+
+        if(tollgates.size() < 377){
+            volleyManager = new VolleyManager(getApplicationContext());
+            routeCodeList = new RouteCodeList();
+            routeCodeItems = routeCodeList.getRouteCodeItemArrayList();
+            getTollgateUnit();
+        }else {
+            TollgateListAdapter tollgateListAdapter = new TollgateListAdapter(tollgates);
+            activityMainBinding.tollgateRecyclerView.setAdapter(tollgateListAdapter);
+            activityMainBinding.progressBar.setVisibility(View.GONE);
+            activityMainBinding.loadingInfo.setVisibility(View.GONE);
+        }
     }
-
-
 
 
     private class TollgateDistanceReceiver extends BroadcastReceiver {
@@ -65,51 +87,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void connectEXApi(String routeNo){
-        Thread connectThread = new Thread(){
+    private void getTollgateUnit() {
+        RouteCodeItem routeCodeItem = routeCodeItems.get(routeCount);
+        connectEXApi(routeCodeItem.getRouteCode());
+        Log.i("getTollgateUnit", routeCodeItem.getRouteCode());
+    }
+
+
+    private void connectEXApi(String routeNo){
+        Thread connectEXApiThread = new Thread(){
             @Override
             public void run() {
-//                getUnitLocationInfo(routeNo);
                 getJsonUnitLocation(routeNo);
             }
         };
-
-        connectThread.setDaemon(true);
-        connectThread.start();
-    }
-
-    public void getUnitLocationInfo(String routeNo){
-
-        String url = EX_API_URL +
-                "key=" + EX_API_KEY + "&" +
-                "type=" + EX_API_TYPE + "&" +
-                "routeNo=" + routeNo + "&" +
-                "numOfRows=" + EX_API_NUM_OF_ROWS + "&" +
-                "pageNo=" + EX_API_PAGE_NO;
-
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-//                        Log.i(TAG, response.toString());
-                        getUnitString(response);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, error.toString());
-                    }
-                }){
-        };
-
-        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
-                6000,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
-        );
-
-        volleyManager.addToRequestQueue(stringRequest);
+        connectEXApiThread.setDaemon(true);
+        connectEXApiThread.start();
     }
 
 
@@ -125,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-//                        Log.e(TAG,response.toString());
                         getUnitJson(response);
                     }
                 },
@@ -140,59 +132,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void getUnitString(String unitData){
-
-        ArrayList<Tollgate> arrayList = new ArrayList<>();
-        Gson gson = new Gson();
-        int count = 0;
-        int pageNo = 0;
-        int numOfRows = 0;
-        int pageSize = 0;
-        String message = "";
-        String code = "";
-
-        try {
-            JSONObject jsonObject = new JSONObject(unitData);
-            count = jsonObject.getInt("count");
-            pageNo = jsonObject.getInt("pageNo");
-            numOfRows = jsonObject.getInt("numOfRows");
-            pageSize = jsonObject.getInt("pageSize");
-            message = jsonObject.getString("message");
-            code = jsonObject.getString("code");
-
-            JSONArray jsonArray = jsonObject.getJSONArray("list");
-
-            for (int i = 0; i < jsonArray.length(); i++) {
-                Tollgate tollgate = gson.fromJson(jsonArray.get(i).toString(), Tollgate.class);
-                arrayList.add(tollgate);
-            }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        String tollgateInfo = "{" +
-                                    "count='" + count + '\'' +
-                                    ", pageNo='" + pageNo + '\'' +
-                                    ", numOfRows='" + numOfRows + '\'' +
-                                    ", pageSize='" + pageSize + '\'' +
-                                    ", message='" + message + '\'' +
-                                    ", code='" + code +
-                                    '}';
-
-        Log.w("Tollgate List Info", tollgateInfo);
-
-        for (Tollgate tollgate : arrayList){
-            Log.e(tollgate.getUnitName(), tollgate.toString());
-        }
-    }
-
-
-
     private void getUnitJson(JSONObject unitData){
-
-        ArrayList<Tollgate> arrayList = new ArrayList<>();
         Gson gson = new Gson();
+        ArrayList<Tollgate> getTollgates = new ArrayList<>();
         int count = 0;
         int pageNo = 0;
         int numOfRows = 0;
@@ -201,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
         String code = "";
 
         try {
-
             count = unitData.getInt("count");
             pageNo = unitData.getInt("pageNo");
             numOfRows = unitData.getInt("numOfRows");
@@ -213,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
 
             for (int i = 0; i < jsonArray.length(); i++) {
                 Tollgate tollgate = gson.fromJson(jsonArray.get(i).toString(), Tollgate.class);
-                arrayList.add(tollgate);
+                getTollgates.add(tollgate);
             }
 
         } catch (JSONException e) {
@@ -230,10 +171,123 @@ public class MainActivity extends AppCompatActivity {
                 '}';
 
         Log.w("Tollgate List Info", tollgateInfo);
+        Log.e("getTollgates", getTollgates.size() + "");
 
-        for (Tollgate tollgate : arrayList){
-            Log.e(tollgate.getUnitName(), tollgate.toString());
+        for (Tollgate tollgate : getTollgates){
+            if(tollgate != null) {
+                tollgateLab.jsonTollgateInsert(tollgate);
+                Log.e("jsonTollgateInsert", tollgate.toString());
+            }
         }
+
+        if(routeCount < routeCodeItems.size()-1){
+            routeCount++;
+            getTollgateUnit();
+            tollgates = tollgateLab.getTollgates();
+            activityMainBinding.progressBar.setProgress(tollgates.size());
+        } else {
+            tollgates = tollgateLab.getTollgates();
+            TollgateListAdapter tollgateListAdapter = new TollgateListAdapter(tollgates);
+            activityMainBinding.tollgateRecyclerView.setAdapter(tollgateListAdapter);
+            activityMainBinding.progressBar.setVisibility(View.GONE);
+            activityMainBinding.loadingInfo.setVisibility(View.GONE);
+        }
+
+
     }
+
+
+
+
+
+//    public void getUnitLocationInfo(String routeNo){
+//
+//        String url = EX_API_URL +
+//                "key=" + EX_API_KEY + "&" +
+//                "type=" + EX_API_TYPE + "&" +
+//                "routeNo=" + routeNo + "&" +
+//                "numOfRows=" + EX_API_NUM_OF_ROWS + "&" +
+//                "pageNo=" + EX_API_PAGE_NO;
+//
+//        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+////                        Log.i(TAG, response.toString());
+//                        getUnitString(response);
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        Log.e(TAG, error.toString());
+//                    }
+//                }){
+//        };
+//
+//        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+//                6000,
+//                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+//                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
+//        );
+//
+//        volleyManager.addToRequestQueue(stringRequest);
+//    }
+
+
+
+//        private void getUnitString(String unitData){
+//
+//        ArrayList<Tollgate> arrayList = new ArrayList<>();
+//        Gson gson = new Gson();
+//        int count = 0;
+//        int pageNo = 0;
+//        int numOfRows = 0;
+//        int pageSize = 0;
+//        String message = "";
+//        String code = "";
+//
+//        try {
+//            JSONObject jsonObject = new JSONObject(unitData);
+//            count = jsonObject.getInt("count");
+//            pageNo = jsonObject.getInt("pageNo");
+//            numOfRows = jsonObject.getInt("numOfRows");
+//            pageSize = jsonObject.getInt("pageSize");
+//            message = jsonObject.getString("message");
+//            code = jsonObject.getString("code");
+//
+//            JSONArray jsonArray = jsonObject.getJSONArray("list");
+//
+//            for (int i = 0; i < jsonArray.length(); i++) {
+//                Tollgate tollgate = gson.fromJson(jsonArray.get(i).toString(), Tollgate.class);
+//                arrayList.add(tollgate);
+//            }
+//
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//        }
+//
+//        String tollgateInfo = "{" +
+//                                    "count='" + count + '\'' +
+//                                    ", pageNo='" + pageNo + '\'' +
+//                                    ", numOfRows='" + numOfRows + '\'' +
+//                                    ", pageSize='" + pageSize + '\'' +
+//                                    ", message='" + message + '\'' +
+//                                    ", code='" + code +
+//                                    '}';
+//
+//        Log.w("Tollgate List Info", tollgateInfo);
+//
+//        for (Tollgate tollgate : arrayList){
+//            tollgateLab.jsonTollgateInsert(tollgate);
+//            Log.e(tollgate.getUnitName(), tollgate.toString());
+//        }
+//
+//        if(routeCount > routeCodeItems.size()){
+//            routeCount++;
+//            getTollgateUnit(routeCount);
+//        }
+//    }
+
 
 }

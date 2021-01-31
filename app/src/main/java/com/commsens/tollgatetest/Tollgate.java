@@ -38,11 +38,11 @@ public class Tollgate {
     }
 
     public String getxValue() {
-        return xValue;
+        return (xValue != null) ? xValue : "Null";
     }
 
     public String getyValue() {
-        return yValue;
+        return (yValue != null) ? yValue : "Null" ;
     }
 
     public String getRouteNo() {
