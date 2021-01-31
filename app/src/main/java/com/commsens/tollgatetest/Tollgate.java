@@ -1,9 +1,6 @@
 package com.commsens.tollgatetest;
 
-import android.content.Intent;
 import android.location.Location;
-import android.os.Parcel;
-import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
@@ -15,19 +12,19 @@ public class Tollgate {
 
     private final String unitCode;
     private final String unitName;
-    private final String unitLatitude;
-    private final String unitLongitude;
-    private final String routeCode;
+    private final String yValue;
+    private final String xValue;
+    private final String routeNo;
     private final String routeName;
     private double almost = 0;
 
-    public Tollgate(String unitCode, String unitName, String unitLatitude,
-                    String unitLongitude, String routeCode, String routeName) {
+    public Tollgate(String unitCode, String unitName, String yValue,
+                    String xValue, String routeNo, String routeName) {
         this.unitCode = unitCode;
         this.unitName = unitName;
-        this.unitLatitude = unitLatitude;
-        this.unitLongitude = unitLongitude;
-        this.routeCode = routeCode;
+        this.yValue = yValue;
+        this.xValue = xValue;
+        this.routeNo = routeNo;
         this.routeName = routeName;
     }
 
@@ -40,16 +37,16 @@ public class Tollgate {
         return unitName;
     }
 
-    public String getUnitLongitude() {
-        return unitLongitude;
+    public String getxValue() {
+        return xValue;
     }
 
-    public String getUnitLatitude() {
-        return unitLatitude;
+    public String getyValue() {
+        return yValue;
     }
 
-    public String getRouteCode() {
-        return routeCode;
+    public String getRouteNo() {
+        return routeNo;
     }
 
     public String getRouteName() {
@@ -62,7 +59,7 @@ public class Tollgate {
 
     public double getDistance (@NonNull Location location){
         return almost = distance(location.getLatitude(), location.getLongitude(),
-                Double.parseDouble(unitLatitude), Double.parseDouble(unitLongitude));
+                Double.parseDouble(yValue), Double.parseDouble(xValue));
     }
 
     private double distance(double P1_latitude, double P1_longitude,
@@ -141,4 +138,16 @@ public class Tollgate {
         return Double.parseDouble(String.format("%.3f", c54));
     }
 
+    @Override
+    public String toString() {
+        return "Tollgate{" +
+                "unitCode='" + unitCode + '\'' +
+                ", unitName='" + unitName + '\'' +
+                ", yValue='" + yValue + '\'' +
+                ", xValue='" + xValue + '\'' +
+                ", routeNo='" + routeNo + '\'' +
+                ", routeName='" + routeName + '\'' +
+                ", almost=" + almost +
+                '}';
+    }
 }

@@ -66,9 +66,9 @@ public class TollgateLab {
         ContentValues contentValues = new ContentValues();
         contentValues.put(TollgateTable.Cols.UNIT_CODE, tollgate.getUnitCode());
         contentValues.put(TollgateTable.Cols.UNIT_NAME, tollgate.getUnitName());
-        contentValues.put(TollgateTable.Cols.UNIT_LATITUDE, tollgate.getUnitLatitude());
-        contentValues.put(TollgateTable.Cols.UNIT_LONGITUDE, tollgate.getUnitLongitude());
-        contentValues.put(TollgateTable.Cols.ROUTE_CODE, tollgate.getRouteCode());
+        contentValues.put(TollgateTable.Cols.UNIT_LATITUDE, tollgate.getyValue());
+        contentValues.put(TollgateTable.Cols.UNIT_LONGITUDE, tollgate.getxValue());
+        contentValues.put(TollgateTable.Cols.ROUTE_CODE, tollgate.getRouteNo());
         contentValues.put(TollgateTable.Cols.ROUTE_NAME, tollgate.getRouteName());
         return contentValues;
     }
